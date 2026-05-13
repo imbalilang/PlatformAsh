@@ -12,7 +12,10 @@ const transformUtils = require('../utils/transform');
 // 改为 let 以支持从数据库动态覆盖
 let vertexModelsList = [
     "[v]gemini-2.5-flash",
-    "[v]gemini-2.5-pro"
+    "[v]gemini-2.5-pro",
+    "[v]gemini-3.0-pro-preview",
+    "[v]gemini-3.1-pro-preview",
+    "[v]gemini-3.1-flash-preview"
 ];
 
 // Default region

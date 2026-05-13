@@ -121,10 +121,14 @@ router.post('/chat/completions', async (req, res, next) => {
         }
 
         // Validate that the requested model is in the enabled list
-        if (!requestedModelId || !enabledModels.includes(requestedModelId)) {
+        const isVertexModel = requestedModelId && requestedModelId.startsWith('[v]');
+        const isVertexAuthorized = vertexProxyService.isVertexEnabled();
+
+        // 如果模型不在列表里，但它是 Vertex 模型且 Vertex 服务已启用，则允许通过
+        if (!requestedModelId || (!enabledModels.includes(requestedModelId) && !(isVertexModel && isVertexAuthorized))) {
             return res.status(400).json({
                 error: {
-                    message: `Model not found or not enabled: ${requestedModelId}. Please check the /v1/models endpoint for available models.`,
+                    message: `Model not found or not enabled: ${requestedModelId}.`,
                     type: 'invalid_request_error',
                     param: 'model'
                 }

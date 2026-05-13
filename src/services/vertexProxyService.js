@@ -573,15 +573,32 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
             }
 
             // Initialize GoogleGenAI client with Vertex AI service account configuration
+            // Initialize GoogleGenAI client with Vertex AI service account configuration
             let region = DEFAULT_REGION;
-            ai = new GoogleGenAI({
-                vertexai: true,
-                project: project_id,
-                location: region
-            });
             
-            console.log(`Vertex AI Client initialized for project '${project_id}' in region '${region}'.`); // Keep log in English
-        }
+            // [修复1] 动态区域路由：针对 3.1 预览版等模型强制使用 global 端点
+            if (vertexModelId.includes('preview')) {
+                region = 'global';
+            }
+
+            // [修复2] 修正为 SDK v0.12.0 规范的参数对象结构
+            const aiOptions = {
+                vertexai: {
+                    project: project_id,
+                    location: region
+                }
+            };
+
+            // [修复3] 绕过 SDK 缺陷：强制重写 global 区域的 Base URL，防止返回 HTML 404
+            if (region === 'global') {
+                aiOptions.httpOptions = {
+                    baseUrl: 'https://aiplatform.googleapis.com'
+                };
+            }
+
+            ai = new GoogleGenAI(aiOptions);
+            
+            console.log(`Vertex AI Client initialized for project '${project_id}' in region '${region}'.`);
 
         // Convert OpenAI format to Vertex format
         const vertexContents = await convertOpenaiMessagesToVertex(openAIRequestBody.messages);

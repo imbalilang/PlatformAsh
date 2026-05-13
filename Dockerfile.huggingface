@@ -5,6 +5,10 @@ USER root
 RUN mkdir -p /home/user/data && \
     chmod 777 /home/user/data && \
     chown -R node:node /home/user/data
+
+# 增加这一行：将本地源码覆盖到镜像内
+COPY ./src ./src
+
 USER node
 EXPOSE 7860
 CMD [ "npm", "start" ]

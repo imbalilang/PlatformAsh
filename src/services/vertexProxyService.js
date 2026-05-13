@@ -547,6 +547,7 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
             }
 
             ai = new GoogleGenAI({
+                apiVersion: 'v1',
                 vertexai: true,
                 apiKey: expressApiKey
             });
@@ -575,6 +576,7 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
             // Initialize GoogleGenAI client with Vertex AI service account configuration
             let region = DEFAULT_REGION;
             ai = new GoogleGenAI({
+                apiVersion: 'v1',
                 vertexai: true,
                 project: project_id,
                 location: region

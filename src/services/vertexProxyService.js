@@ -1029,7 +1029,7 @@ async function reinitializeWithDatabaseConfig() {
     isUsingExpressMode = false;
     VERTEX_JSON_STRING = null;
 
-    // Clean up existing credentials file if it exists (必须先清理旧的)
+    // Clean up existing credentials file if it exists
     if (tempCredentialsPath) {
         try {
             const fs = require('fs').promises;
@@ -1044,7 +1044,7 @@ async function reinitializeWithDatabaseConfig() {
     // Clear environment variable
     delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-    // Reinitialize with new configuration (然后再生成新的)
+    // Reinitialize with new configuration
     await initializeVertexCredentials();
 
     console.log("Vertex AI reinitialization completed");

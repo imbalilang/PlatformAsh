@@ -8,8 +8,9 @@ const { GoogleGenAI } = require('@google/genai');
 const configService = require('./configService');
 const transformUtils = require('../utils/transform');
 
-// List of Vertex AI supported models (prefix [v] indicates it's a Vertex API model)
-const VERTEX_SUPPORTED_MODELS = [
+// Default list of Vertex AI supported models (prefix [v] indicates it's a Vertex API model)
+// 改为 let 以支持从数据库动态覆盖
+let vertexModelsList = [
     "[v]gemini-2.5-flash",
     "[v]gemini-2.5-pro"
 ];
@@ -29,6 +30,10 @@ let isUsingExpressMode = false; // Track if we're using Express Mode
 
 /**
  * Initializes Vertex credentials (loads JSON, creates temp file, sets env var) on service start.
+ */
+/**
+ * Initializes Vertex credentials (loads JSON, creates temp file, sets env var) on service start.
+ * 并且在初始化时从数据库尝试加载动态的 Vertex 模型列表。
  */
 async function initializeVertexCredentials() {
     if (isVertexInitialized) return; // Already initialized
@@ -53,6 +58,27 @@ async function initializeVertexCredentials() {
     // Check database configuration first
     if (databaseConfig && (databaseConfig.expressApiKey || databaseConfig.vertexJson)) {
         console.info("Using Vertex AI configuration from database");
+
+        // --- 新增：尝试从数据库加载自定义模型列表 ---
+        try {
+            const customModels = await configService.getSetting('vertex_models', '');
+            if (customModels) {
+                // 支持 JSON 数组格式 '["[v]gemini-2.5-pro", "[v]gemini-3.0-pro-preview"]' 
+                // 或逗号分隔格式 "[v]gemini-2.5-pro, [v]gemini-3.0-pro-preview"
+                try {
+                    const parsed = JSON.parse(customModels);
+                    if (Array.isArray(parsed)) {
+                        vertexModelsList = parsed;
+                    }
+                } catch (e) {
+                    vertexModelsList = customModels.split(',').map(m => m.trim()).filter(m => m);
+                }
+                console.info(`Loaded ${vertexModelsList.length} Vertex models from database: ${vertexModelsList.join(', ')}`);
+            }
+        } catch (error) {
+            console.warn("Failed to load dynamic Vertex models, using defaults:", error);
+        }
+        // --- 新增结束 ---
 
         if (databaseConfig.expressApiKey) {
             // Use Express Mode from database
@@ -974,8 +1000,8 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
  * @returns {Array<string>} Array of supported model IDs.
  */
 function getVertexSupportedModels() {
-    // Return supported models if either authentication method is available
-    return (isUsingExpressMode || VERTEX_JSON_STRING) ? VERTEX_SUPPORTED_MODELS : [];
+    // 只有在功能启用时才返回列表
+    return isVertexEnabled() ? vertexModelsList : [];
 }
 
 /**
@@ -999,7 +1025,7 @@ async function reinitializeWithDatabaseConfig() {
     isVertexInitialized = false;
     isUsingExpressMode = false;
     VERTEX_JSON_STRING = null;
-
+    await initializeVertexCredentials();
     // Clean up existing credentials file if it exists
     if (tempCredentialsPath) {
         try {

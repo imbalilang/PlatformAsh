@@ -573,7 +573,6 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
             }
 
             // Initialize GoogleGenAI client with Vertex AI service account configuration
-            // Initialize GoogleGenAI client with Vertex AI service account configuration
             let region = DEFAULT_REGION;
             
             // [修复1] 动态区域路由：针对 3.1 预览版等模型强制使用 global 端点
@@ -599,6 +598,7 @@ async function proxyVertexChatCompletions(openAIRequestBody, workerApiKey, strea
             ai = new GoogleGenAI(aiOptions);
             
             console.log(`Vertex AI Client initialized for project '${project_id}' in region '${region}'.`);
+        }
 
         // Convert OpenAI format to Vertex format
         const vertexContents = await convertOpenaiMessagesToVertex(openAIRequestBody.messages);
